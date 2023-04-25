@@ -1,0 +1,13 @@
+django == 4.2
+django-model-utils == 4.3.1
+# Debugging
+django-debug-toolbar==4.0.0
+# for relative time delta
+python-dateutil == 2.8.2
+# Database visualazation
+django-extensions
+#janus
+git+https://github.com/smartlgt/janus-allauth-provider@1.2.0#egg=janus-allauth-provider
+# Icons
+fontawesomefree==6.4.0
+

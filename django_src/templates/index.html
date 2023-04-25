@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load settings_utils %}
+{% block content %}
+    <script>
+        function request_appointment(availability_id) {
+            axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+            axios.defaults.xsrfCookieName = "csrftoken"
+            axios.post('{% url 'booking' %}', {
+                availability_id: availability_id,
+                topic: document.getElementById("topic-" + availability_id).value
+            }).then(function (response) {
+                console.log("success")
+            }).catch(function (error) {
+                console.log(error);
+            })
+        }
+    </script>
+    <div id="termin-selection" class="mt-5">
+        <div class="accordion" id="accordionExample">
+            {% for entry in availabilitys %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse-{{ entry.0.id }}"
+                                aria-expanded="true" aria-controls="collapse{{ entry.0.id }}">
+                            {{ entry.0 }}
+                        </button>
+                    </h2>
+                    <div id="collapse-{{ entry.0.id }}" class="accordion-collapse collapse" aria-labelledby="headingOne"
+                         data-bs-parent="#accordionExample">
+                        <div class="accordion-body">
+
+
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col">When</th>
+                                    <th scope="col"></th>
+                                    <th scope="col">Duration</th>
+                                    <th scope="col">Preferred Location</th>
+                                    <th scope="col">Topic</th>
+                                    <th scope="col">Available Slots</th>
+                                    <th scope="col"></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for avail in entry.1 %}
+                                    <tr>
+                                        <td>{% day_name avail.start_time.0 %}</td>
+                                        <td>{{ avail.start_time.1 }} O'Clock</td>
+                                        <td>{% settings_value "TIME_SLOT_DURATION" %} </td>
+                                        <td>{{ avail.preferred_location }}</td>
+                                        <td>
+                                            <div class="input-group flex-nowrap">
+                                                <input id="topic-{{ avail.id }}" type="text" class="form-control"
+                                                       placeholder="Topic"
+                                                       aria-label="Username" aria-describedby="addon-wrapping">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ avail.capacity.0 }} of {{ avail.capacity.1 }}
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    {% if not avail.is_bookable %}
+                                                    class="btn btn-light"
+                                                    disable
+                                                    {% else %}
+                                                    class="btn btn-info"
+                                                    onclick="request_appointment({{ avail.id }})"
+                                                    {% endif %}>book
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
