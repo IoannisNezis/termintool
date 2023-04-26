@@ -1,5 +1,7 @@
 django == 4.2
 django-model-utils == 4.3.1
+# [Postgresql]
+psycopg2-binary==2.9.5
 # Debugging
 django-debug-toolbar==4.0.0
 # for relative time delta
