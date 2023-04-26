@@ -2,48 +2,60 @@
 {% load custom_tags %}
 {% block content %}
     <script>
-        function book_appointment(availability_id) {
-            axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
-            axios.defaults.xsrfCookieName = "csrftoken";
-            const topic_field = document.getElementById("topic-" + availability_id);
-            const capacity_count = document.getElementById("capacity-" + availability_id);
-            const book_button = document.getElementById("button-" + availability_id);
-            axios.post('{% url 'book' %}', {
-                availability_id: availability_id,
-                topic: topic_field.value
-            }).then(function (response) {
-                create_message_toast("success", response.data)
-                capacity_count.textContent -= 1;
-                topic_field.value = "";
-                book_button.textContent = "cancel";
-                book_button.className = "btn btn-danger";
-                book_button.onclick = function () {
-                    cancel_appointment(availability_id);
-                }
+        var booking = false;
+        var canceling = false;
 
-            }).catch(function (error) {
-                create_message_toast("danger", error.response.data)
-            })
+        function book_appointment(availability_id) {
+            if (!booking) {
+                booking = true;
+                axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+                axios.defaults.xsrfCookieName = "csrftoken";
+                const topic_field = document.getElementById("topic-" + availability_id);
+                const capacity_count = document.getElementById("capacity-" + availability_id);
+                const book_button = document.getElementById("button-" + availability_id);
+                axios.post('{% url 'book' %}', {
+                    availability_id: availability_id,
+                    topic: topic_field.value
+                }).then(function (response) {
+                    create_message_toast("success", response.data)
+                    capacity_count.textContent -= 1;
+                    topic_field.value = "";
+                    book_button.textContent = "cancel";
+                    book_button.className = "btn btn-danger";
+                    book_button.onclick = function () {
+                        cancel_appointment(availability_id);
+                    }
+                    booking = false;
+                }).catch(function (error) {
+                    create_message_toast("danger", error.response.data)
+                    booking = false;
+                })
+            }
         }
 
         function cancel_appointment(availability_id) {
-            axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
-            axios.defaults.xsrfCookieName = "csrftoken";
-            const capacity_count = document.getElementById("capacity-" + availability_id);
-            const book_button = document.getElementById("button-" + availability_id);
-            axios.post('{% url 'cancel' %}', {
-                availability_id: availability_id
-            }).then(function (response) {
-                 create_message_toast("info", response.data)
-                capacity_count.textContent -= -1;
-                book_button.textContent = "book";
-                book_button.className = "btn btn-info";
-                book_button.onclick = function () {
-                    book_appointment(availability_id);
-                }
-            }).catch(function (error) {
-                 create_message_toast("danger", error.response.data)
-            })
+            if (!canceling) {
+                canceling = true;
+                axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+                axios.defaults.xsrfCookieName = "csrftoken";
+                const capacity_count = document.getElementById("capacity-" + availability_id);
+                const book_button = document.getElementById("button-" + availability_id);
+                axios.post('{% url 'cancel' %}', {
+                    availability_id: availability_id
+                }).then(function (response) {
+                    create_message_toast("info", response.data)
+                    capacity_count.textContent -= -1;
+                    book_button.textContent = "book";
+                    book_button.className = "btn btn-info";
+                    book_button.onclick = function () {
+                        book_appointment(availability_id);
+                    }
+                    canceling=false;
+                }).catch(function (error) {
+                    create_message_toast("danger", error.response.data);
+                    canceling=false;
+                })
+            }
         }
     </script>
     <div id="termin-selection" class="mt-5">
