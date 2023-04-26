@@ -25,7 +25,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /code
 
-COPY ./src/ /code/
+COPY ./django_src/ /code/
 COPY ./build/app/uwsgi.ini /config/uwsgi/uwsgi.ini
 COPY --from=build /install /usr/local
 # required by the ci
