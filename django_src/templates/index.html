@@ -12,6 +12,7 @@
                 availability_id: availability_id,
                 topic: topic_field.value
             }).then(function (response) {
+                create_message_toast("success", response.data)
                 capacity_count.textContent -= 1;
                 topic_field.value = "";
                 book_button.textContent = "cancel";
@@ -19,8 +20,9 @@
                 book_button.onclick = function () {
                     cancel_appointment(availability_id);
                 }
+
             }).catch(function (error) {
-                console.log("Nope");
+                create_message_toast("danger", error.response.data)
             })
         }
 
@@ -32,6 +34,7 @@
             axios.post('{% url 'cancel' %}', {
                 availability_id: availability_id
             }).then(function (response) {
+                 create_message_toast("info", response.data)
                 capacity_count.textContent -= -1;
                 book_button.textContent = "book";
                 book_button.className = "btn btn-info";
@@ -39,7 +42,7 @@
                     book_appointment(availability_id);
                 }
             }).catch(function (error) {
-                console.log("Nope");
+                 create_message_toast("danger", error.response.data)
             })
         }
     </script>

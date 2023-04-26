@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,12 +13,25 @@
 </head>
 <body>
 <h1 class="text-center mt-4">Termintool</h1>
-
+<!-- Toast messages -->
+<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+</div>
 <div class="container">
     {% block content %}
     {% endblock %}
 </div>
-
+<div id="messages">
+    {% if messages %}
+        {% for message in messages %}
+            <script>
+                setTimeout(function(){
+                    create_message_toast("{{ message.tags }}", "{{ message }}" );
+                }, 500);
+            </script>
+        {% endfor %}
+    {% endif %}
+</div>
+<script src="{% static 'assets/js/toasts.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </body>
 </html>

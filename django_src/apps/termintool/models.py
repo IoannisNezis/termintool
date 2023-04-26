@@ -17,6 +17,10 @@ class User(AbstractUser):
     def is_tutor(self):
         return self.groups.filter(name=settings.MENTOR_GROUP_NAME).exists()
 
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
 
 class Availability(models.Model):
     mentor = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
