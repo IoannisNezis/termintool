@@ -22,14 +22,14 @@ MIN_BOOKING_THRESHOLD = timedelta(hours=1)
 # Note that the enumerations for tha days should always be correct, even if you skip a day...
 # i.e. Sunday has to be '6' for time calculations and stuff
 DAYS = (
-            (0, 'Monday'),
-            (1, 'Tuesday'),
-            (2, 'Wednesday'),
-            (3, 'Thursday'),
-            (4, 'Friday'),
-            (5, 'Saturday'),
-            (6, 'Sunday'),
-        )
+    (0, 'Monday'),
+    (1, 'Tuesday'),
+    (2, 'Wednesday'),
+    (3, 'Thursday'),
+    (4, 'Friday'),
+    (5, 'Saturday'),
+    (6, 'Sunday'),
+)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,10 +37,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--^=(qc5l4d#^9twfs12$9)0$w7&*apgt+6slk%l*7_inm7xkqg'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure--^=(qc5l4d#^9twfs12$9)0$w7&*apgt+6slk%l*7_inm7xkqg')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = get_env_bool("DJANGO_DEBUG", True)
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -56,7 +56,7 @@ INSTALLED_APPS = [
 
     'apps.termintool',
 
-    #'django_toolbar',
+    # 'django_toolbar',
     'fontawesomefree',
     'allauth',
     'allauth.account',
@@ -102,13 +102,23 @@ WSGI_APPLICATION = 'configuration.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'password'),
+            'HOST': 'db'
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
