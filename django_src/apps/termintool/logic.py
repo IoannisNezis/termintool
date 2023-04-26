@@ -8,7 +8,7 @@ def get_next_possible_date(availability):
     day_delta = (availability.start_time[0] - now.weekday()) % 7
     hour_delta = availability.start_time[1] - now.hour
     if day_delta == 0 and hour_delta <= 0:
-        day_delta.weeks += 7
+        day_delta += 7
     delta = relativedelta(days=day_delta,
                           hours=hour_delta,
                           minute=0,
