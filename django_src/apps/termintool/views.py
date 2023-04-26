@@ -11,7 +11,7 @@ def index(request):
     mentors = User.objects.filter(groups__name=settings.MENTOR_GROUP_NAME)
     context = {"availabilitys": []}
     for mentor in mentors:
-        context["availabilitys"].append((mentor.full_name, Availability.get_availability_for(mentor)))
+        context["availabilitys"].append((mentor, Availability.get_availability_for(mentor)))
 
     return render(request, "index.html", context)
 

@@ -12,8 +12,6 @@ if [ "$1" = 'uwsgi' ]; then
 
     python manage.py migrate --noinput
 
-    python manage.py build_meilisearch_index
-
     echo "########################################################"
 fi
 
