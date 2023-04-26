@@ -1,6 +1,5 @@
 import math
 
-from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import datetime
@@ -9,6 +8,8 @@ from django.utils import timezone
 from .fields import WeekdayTimeField
 from django.conf import settings
 from model_utils.models import TimeStampedModel
+
+from .logic import get_next_possible_date, send_booking_cancel_notification
 
 
 class User(AbstractUser):
@@ -29,41 +30,40 @@ class Availability(models.Model):
         return f"{self.mentor} : {self.start_time}"
 
     def book(self, user, topic):
-        next_date = self.get_next_possible_date()
         # Check if user has already booked this appointment
-        Booking.objects.get_or_create(appointment=self,
-                                      appointment_time=next_date,
-                                      attendee=user,
-                                      topic=topic
-                                      )
+        if Booking.objects.filter(appointment=self,
+                                  appointment_time__gt=timezone.localtime(),
+                                  attendee=user,
+                                  topic=topic,
+                                  canceled=None
+                                  ).exists():
+            return False
+        next_timeslot = self.get_next_timeslot()
+        Booking.objects.create(appointment=self,
+                               appointment_time=next_timeslot,
+                               attendee=user,
+                               topic=topic
+                               )
+        return True
 
-    def get_next_possible_date(self):
-        now = timezone.localtime()
-        day_delta = (self.start_time[0] - now.weekday()) % 7
-        hour_delta = self.start_time[1] - now.hour
-        if day_delta == 0 and hour_delta <= 0:
-            delta.weeks += 1
-        delta = relativedelta(days=day_delta,
-                              hours=hour_delta,
-                              minute=0,
-                              second=0,
-                              microsecond=0)
-        if (now + delta) - now < settings.MIN_BOOKING_THRESHOLD:
-            delta.weeks += 1
-        return now + delta
+    def get_next_timeslot(self):
+        next_date = get_next_possible_date(self)
+        booked, possible = self.capacity
+        return next_date + (possible-booked) * settings.TIME_SLOT_DURATION
 
     @property
     def capacity(self):
-        """A Appointment has a fiexed duration, defined in the settings. So a Availibility can be booked multible times.
+        """An Appointment has a fixed duration, defined in the settings. So an Availability can be booked multiple times.
         This funktion returns two values: how often this has been booked and how often it can be booked"""
 
         possible = math.floor(self.duration / settings.TIME_SLOT_DURATION)
-        booked = self.booking_set.filter(appointment_time__gt=timezone.now()).count()
-        return (possible - booked, possible)
+        booked = self.booking_set.filter(appointment_time__gt=timezone.localtime(),
+                                         canceled=None).count()
+        return possible - booked, possible
 
     @property
     def is_bookable(self):
-        return self.capacity[0] > 0 and self.canceled is not None
+        return self.capacity[0] > 0 and self.canceled is None
 
     @property
     def is_canceled(self):
@@ -83,6 +83,11 @@ class Booking(TimeStampedModel):
     attendee = models.ForeignKey(User, on_delete=models.CASCADE)
     topic = models.CharField(default="", max_length=100)
     canceled = models.DateTimeField(null=True, blank=True, default=None)
+
+    def cancel(self):
+        self.canceled = timezone.localtime()
+        send_booking_cancel_notification(self)
+        self.save()
 
     @property
     def is_canceled(self):

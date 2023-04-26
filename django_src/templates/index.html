@@ -1,17 +1,45 @@
 {% extends 'base.html' %}
-{% load settings_utils %}
+{% load custom_tags %}
 {% block content %}
     <script>
-        function request_appointment(availability_id) {
-            axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
-            axios.defaults.xsrfCookieName = "csrftoken"
-            axios.post('{% url 'booking' %}', {
+        function book_appointment(availability_id) {
+            axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+            axios.defaults.xsrfCookieName = "csrftoken";
+            const topic_field = document.getElementById("topic-" + availability_id);
+            const capacity_count = document.getElementById("capacity-" + availability_id);
+            const book_button = document.getElementById("button-" + availability_id);
+            axios.post('{% url 'book' %}', {
                 availability_id: availability_id,
-                topic: document.getElementById("topic-" + availability_id).value
+                topic: topic_field.value
             }).then(function (response) {
-                console.log("success")
+                capacity_count.textContent -= 1;
+                topic_field.value = "";
+                book_button.textContent = "cancel";
+                book_button.className = "btn btn-danger";
+                book_button.onclick = function () {
+                    cancel_appointment(availability_id);
+                }
             }).catch(function (error) {
-                console.log(error);
+                console.log("Nope");
+            })
+        }
+
+        function cancel_appointment(availability_id) {
+            axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+            axios.defaults.xsrfCookieName = "csrftoken";
+            const capacity_count = document.getElementById("capacity-" + availability_id);
+            const book_button = document.getElementById("button-" + availability_id);
+            axios.post('{% url 'cancel' %}', {
+                availability_id: availability_id
+            }).then(function (response) {
+                capacity_count.textContent -= -1;
+                book_button.textContent = "book";
+                book_button.className = "btn btn-info";
+                book_button.onclick = function () {
+                    book_appointment(availability_id);
+                }
+            }).catch(function (error) {
+                console.log("Nope");
             })
         }
     </script>
@@ -45,9 +73,17 @@
                                 </thead>
                                 <tbody>
                                 {% for avail in entry.1 %}
+                                    {% has_booked user avail as booked %}
                                     <tr>
-                                        <td>{% day_name avail.start_time.0 %}</td>
-                                        <td>{{ avail.start_time.1 }} O'Clock</td>
+                                        <td>
+                                            {% if booked %}
+                                                {{ booked.appointment_time|date:'G:i, jS F, l'  }}
+                                            {% else %}
+
+                                                {{ avail.get_next_timeslot|date:'G:i, jS F, l'  }}
+
+                                            {% endif %}
+                                        </td>
                                         <td>{% settings_value "TIME_SLOT_DURATION" %} </td>
                                         <td>{{ avail.preferred_location }}</td>
                                         <td>
@@ -58,18 +94,32 @@
                                             </div>
                                         </td>
                                         <td>
-                                            {{ avail.capacity.0 }} of {{ avail.capacity.1 }}
+                                            <span id="capacity-{{ avail.id }}">{{ avail.capacity.0 }}</span>
+                                            of {{ avail.capacity.1 }}
                                         </td>
                                         <td>
-                                            <button type="button"
-                                                    {% if not avail.is_bookable %}
-                                                    class="btn btn-light"
-                                                    disable
-                                                    {% else %}
-                                                    class="btn btn-info"
-                                                    onclick="request_appointment({{ avail.id }})"
-                                                    {% endif %}>book
-                                            </button>
+
+                                            {% if booked %}
+                                                <button id="button-{{ avail.id }}"
+                                                        type="button"
+                                                        class="btn btn-danger"
+                                                        style="width: 100%"
+                                                        onclick="cancel_appointment({{ avail.id }})">
+                                                    cancel
+                                                </button>
+                                            {% else %}
+                                                <button id="button-{{ avail.id }}"
+                                                        type="button"
+                                                        style="width: 100%"
+                                                        {% if not avail.is_bookable %}
+                                                        class="btn btn-light"
+                                                        disable
+                                                        {% else %}
+                                                        class="btn btn-info"
+                                                        onclick="book_appointment({{ avail.id }})"
+                                                        {% endif %}>book
+                                                </button>
+                                            {% endif %}
                                         </td>
                                     </tr>
 
