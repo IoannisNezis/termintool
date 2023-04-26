@@ -20,14 +20,15 @@ class User(AbstractUser):
 
 class Availability(models.Model):
     mentor = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
-    start_time = WeekdayTimeField()
+    day = models.IntegerField(choices=settings.DAYS)
+    hour = models.IntegerField(choices=[(i, '{0:02d}:00'.format(i)) for i in range(24)])
     duration = models.DurationField(default=datetime.timedelta(hours=1))
     preferred_location = models.CharField(max_length=50)
     # canceled is None by defauld, when it is not None the Appointment is Canceled and this fields shows when it was
     canceled = models.DateTimeField(null=True, blank=True, default=None)
 
     def __str__(self):
-        return f"{self.mentor} : {self.start_time}"
+        return f"{self.mentor} : {self.time_for_humans()}"
 
     def book(self, user, topic):
         # Check if user has already booked this appointment
@@ -70,7 +71,7 @@ class Availability(models.Model):
         return self.canceled is not None
 
     def time_for_humans(self):
-        return f"{dict(settings.DAYS)[self.start_time[0]]}  : {self.start_time[1]} O'Clock"
+        return f"{self.get_day_display()} : {self.get_hour_display()}"
 
     @classmethod
     def get_availability_for(cls, mentor):
